@@ -13,7 +13,6 @@ import torch
 from tenacity import retry, stop_after_attempt, wait_fixed
 from google.api_core.exceptions import ResourceExhausted
 
-
 import os
 import streamlit as st
 from dotenv import load_dotenv
@@ -138,24 +137,35 @@ def query(question, chat_history):
     retrieved_docs = retrieval_output  # Extract documents from the output
     # Now rerank the retrieved documents
     reranked_docs = rerank_with_cross_encoder(question, retrieved_docs)
+    
+    # Prepare the sources of the retrieved documents
+    sources = [doc.metadata.get("source", "Unknown Source") for doc in reranked_docs]
+    
     # Pass the reranked docs to the QA chain
-    return convo_qa_chain.invoke({"input": question, "chat_history": chat_history, "context": reranked_docs})
-
-
+    answer = convo_qa_chain.invoke({"input": question, "chat_history": chat_history, "context": reranked_docs})
+    
+    # Return the answer along with document sources
+    return {"answer": answer, "sources": sources}
 
 
 def show_ui():
     """
     1. This function implements the Streamlit UI for the Chatbot.
     2. It handles user input, displays chat history, and fetches results based on user queries.
-    3. Implements two session_state vatiables - 'messages' - to contain the accumulating Questions and Answers to be displayed on the UI and
+    3. Implements two session_state variables - 'messages' - to contain the accumulating Questions and Answers to be displayed on the UI and
        'chat_history' - the accumulating question-answer pairs as a List of Tuples to be served to the Retriever object as chat_history
-    4. For each user query, the response is obtained by invoking the 'query' function and the chat histories are byilt up
+    4. For each user query, the response is obtained by invoking the 'query' function and the chat histories are built up
     """
-    st.title("Chat With Your Documents")
-    st.subheader("Ask any question related to your documents")
+    st.set_page_config(page_title="Chavera Medical Bot")
+    st.title("Chavera MedBot: Your Medical Assistant 👩‍⚕️")
+    st.subheader("Ask any question related to your medical issue")
 
     if "messages" not in st.session_state:
+        st.session_state.messages = []
+        st.session_state.chat_history = []
+
+    # Clear chat button
+    if st.button("Clear Chat"):
         st.session_state.messages = []
         st.session_state.chat_history = []
 
@@ -163,19 +173,28 @@ def show_ui():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("Ask your document-related query: "):
-        with st.spinner("Fetching answer..."):
+    if prompt := st.chat_input("Ask your query: "):
+        with st.spinner("Working on your query..."):
             response = query(question=prompt, chat_history=st.session_state.chat_history)
+            answer = response["answer"]
+            sources = response["sources"]
+
+            # Format the response as markdown
+            formatted_response = f"{answer}\n\n**Sources:**\n" + "\n".join([f"- {source}" for source in sources])
+
+            # Display the user's query
             with st.chat_message("user"):
                 st.markdown(prompt)
+
+            # Display the assistant's response with formatted markdown
             with st.chat_message("assistant"):
-                st.markdown(response["answer"])
+                st.markdown(formatted_response)
 
+            # Update session state
             st.session_state.messages.append({"role": "user", "content": prompt})
-            st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
-            st.session_state.chat_history.extend([(prompt, response["answer"])])
+            st.session_state.messages.append({"role": "assistant", "content": formatted_response})
+            st.session_state.chat_history.extend([(prompt, answer)])
 
-            
 
 if __name__ == "__main__":
     show_ui()
