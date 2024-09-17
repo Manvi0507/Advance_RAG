@@ -118,9 +118,9 @@ def query(question, chat_history):
     )
 
     system_prompt ="""
-    You are an assistant for question-answering tasks. Use the following pieces of retrieved context 
-    to answer the question. If you don't know the answer, say that you don't know.
-    Use three sentences maximum and keep the answer concise.
+    You are an assistant for question-answering tasks. Strictly use only the following pieces of retrieved context to answer the question.
+    If the answer is not present in the provided context, respond with "The information is not provided in the context."
+    Provide concise answers.
     \n\n
     {context}
     """
