@@ -1,0 +1,14 @@
+streamlit
+langchain
+langchain-community
+langchain-core
+langchain_google_genai 
+google_generativeai
+faiss-cpu 
+python-dotenv 
+unstructured[all]
+bs4
+python-docx
+python-pptx
+sentence-transformers
+torch

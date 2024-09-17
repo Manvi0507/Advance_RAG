@@ -1,0 +1,22 @@
+I want to make a multiple document(including ppt,docx,pdf,txt files) RAG QnA chatbot. It it able to retrieve all the information from document such text, table, images, etc.
+It also uses advance RAG techniques to improve the accuracy of result. these are the example of libraries which will be use for RAG response evaluation and read unstructured data
+from langchain_community.document_loaders import UnstructuredPDFLoader, DirectoryLoader
+loader = DirectoryLoader("data/", glob="./*.pdf", loader_cls=UnstructuredPDFLoader)
+documents = loader.load()
+from langchain.document_loaders import DirectoryLoader
+
+pdf_loader = DirectoryLoader('/content/Documents/', glob="**/*.pdf")
+readme_loader = DirectoryLoader('/content/Documents/', glob="**/*.md")
+txt_loader = DirectoryLoader('/content/Documents/', glob="**/*.txt")
+#take all the loader
+loaders = [pdf_loader, readme_loader, txt_loader]
+
+#lets create document 
+documents = []
+for loader in loaders:
+    documents.extend(loader.load())
+from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+from ragas.langchain import RagasEvaluatorChain
+use chromadb to store vector embeddimgs
+embeddings: google_genai embeddings
+llm: Groq llama-3.1-8b-instant
