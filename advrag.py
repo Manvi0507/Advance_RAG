@@ -182,6 +182,7 @@ def show_ui():
             # Format the response as markdown
             formatted_response = f"{answer}\n\n**Sources:**\n" + "\n".join([f"- {source}" for source in sources])
 
+
             # Display the user's query
             with st.chat_message("user"):
                 st.markdown(prompt)
