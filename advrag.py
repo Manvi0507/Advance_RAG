@@ -24,6 +24,7 @@ st.set_page_config(page_title="Chavera Medical Bot")
 # Load Google API key
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+groq_api_key = os.getenv('GROQ_API_KEY')
 
 # Cross-encoder setup for reranking
 cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', default_activation_function=torch.nn.Sigmoid())  # Example model
@@ -104,7 +105,8 @@ def ask_query(question, chat_history):
     chat_history = build_chat_history(chat_history)
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     new_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.0)
+    #llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.0)
+    llm = ChatGroq(api_key=groq_api_key, model_name="Llama3-8b-8192")  
 
     condense_question_system_template ="""
     Given a chat history and the latest user question, which might reference context in the chat history,
