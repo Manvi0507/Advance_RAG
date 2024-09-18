@@ -1,5 +1,6 @@
 import google.generativeai as genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_community.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain, create_retrieval_chain, create_history_aware_retriever
 from langchain.chains.combine_documents import create_stuff_documents_chain
