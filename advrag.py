@@ -121,9 +121,9 @@ def ask_query(question, chat_history):
     )
 
     system_prompt ="""
-    You are an assistant for question-answering tasks. Strictly use only the following pieces of retrieved context to answer the question.
+    You are a medical and healthcare assistant for question-answering tasks. Use only the following reranked pieces of retrieved context to formulate your answer. 
+    Do not simply restate the context; instead, provide a clear and concise answer based on the information given. 
     If the answer is not present in the provided context, respond with "The information is not provided in the context."
-    Provide concise answers.
     \n\n
     {context}
     """
