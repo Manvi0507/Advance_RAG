@@ -3,6 +3,7 @@ langchain
 langchain-community
 langchain-core
 langchain_google_genai 
+langchain-groq
 google_generativeai
 faiss-cpu 
 python-dotenv 
