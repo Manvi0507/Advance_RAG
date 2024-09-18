@@ -12,11 +12,14 @@ from sentence_transformers import CrossEncoder  # For cross-encoder reranking
 import torch
 from tenacity import retry, stop_after_attempt, wait_fixed
 from google.api_core.exceptions import ResourceExhausted
+import hashlib
 
 
 import os
 import streamlit as st
 from dotenv import load_dotenv
+
+st.set_page_config(page_title="Chavera Medical Bot")
 
 # Load Google API key
 load_dotenv()
@@ -89,7 +92,7 @@ def rerank_with_cross_encoder(query, retrieved_docs):
     return [doc for doc, score in reranked_docs]
 
 
-def query(question, chat_history):
+def ask_query(question, chat_history):
     """
     This function performs the following tasks:
     1. Takes in a 'question' and 'chat_history'.
@@ -147,41 +150,67 @@ def query(question, chat_history):
 def show_ui():
     """
     1. This function implements the Streamlit UI for the Chatbot.
-    2. It handles user input, displays chat history, and fetches results based on user queries.
-    3. Implements two session_state vatiables - 'messages' - to contain the accumulating Questions and Answers to be displayed on the UI and
-       'chat_history' - the accumulating question-answer pairs as a List of Tuples to be served to the Retriever object as chat_history
-    4. For each user query, the response is obtained by invoking the 'query' function and the chat histories are byilt up
+    2. It provides an interface where users can either ask their own questions or click on preset beginner queries (displayed as buttons).
+    3. When the user clicks a button, the corresponding question is submitted, and the response is displayed.
     """
-    st.set_page_config(page_title="Chavera Medical Bot")
+    #st.set_page_config(page_title="Chavera Medical Bot")
     st.title("Chavera MedBot: Your Medical Assistant 👩‍⚕️")
     st.subheader("Ask any question related to your medical issue")
 
+    # List of beginner queries
+    beginner_queries = [
+        "What are the common causes of fever?",
+        "How can I treat a common cold at home?",
+        "What are the symptoms of diabetes?",
+        "How do I know if I have the flu or a cold?",
+        "When should I seek medical attention for a headache?",
+        "What are the side effects of common medications?",
+    ]
+
+    # Display beginner queries as buttons
+    cols = st.columns(3)  # Create 3 columns for buttons
+
+    selected_query = None
+    for i, query in enumerate(beginner_queries):
+        if cols[i % 3].button(query, key=f"query_button_{i}"):  # Add a unique key for each button
+           selected_query = query
+
+    # Initialize session state if not set
     if "messages" not in st.session_state:
         st.session_state.messages = []
-        st.session_state.chat_history = []
+        st.session_state.chat_history = []  # Initialize chat_history as an empty list
 
     # Clear chat button
     if st.button("Clear Chat"):
         st.session_state.messages = []
         st.session_state.chat_history = []
 
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    # Accept user input or use the selected query
+    if selected_query:
+        prompt = selected_query
+    else:
+        prompt = st.chat_input("Ask your query:")
 
-    if prompt := st.chat_input("Ask your query: "):
+    # Process user input
+    if prompt:
         with st.spinner("Working on your query..."):
-            response = query(question=prompt, chat_history=st.session_state.chat_history)
+            chat_history = st.session_state.chat_history
+            if not chat_history:
+                chat_history = []
+            response = ask_query(question=prompt, chat_history=chat_history)  # renamed function
+
+            # Display messages
             with st.chat_message("user"):
-                st.markdown(prompt)
+                st.markdown(f"**Your Query:** {prompt}")
+
             with st.chat_message("assistant"):
                 st.markdown(response["answer"])
 
+            # Append user message to chat history
             st.session_state.messages.append({"role": "user", "content": prompt})
             st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
             st.session_state.chat_history.extend([(prompt, response["answer"])])
 
-            
-
 if __name__ == "__main__":
     show_ui()
+
